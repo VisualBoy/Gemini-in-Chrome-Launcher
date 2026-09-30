@@ -49,7 +49,7 @@ start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" ^
 
 ### Option 3: `.bat` Wrapper for the Full PowerShell Script with VPN orchestration
 
-If you want a double-clickable `.bat` file that executes the full [PowerShell script](https://github.com/VisualBoy/Gemini-in-Chrome-Launcher/tree/main/launch_chrome_ai.ps1) (including elevated routing and VPN logic) while handling UAC elevation automatically:
+If you want a double-clickable `.bat` file that executes the full [PowerShell script](https://github.com/VisualBoy/Gemini-in-Chrome-Launcher/tree/vpn-tunneling/launch_chrome_ai.ps1) (including elevated routing and VPN logic) while handling UAC elevation automatically:
 
 `launch_chrome_ai_with_vpn.bat`
 
@@ -58,3 +58,8 @@ If you want a double-clickable `.bat` file that executes the full [PowerShell sc
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File \"%~dp0launch_chrome_ai.ps1\"' -Verb RunAs"
 
 ```
+
+
+Check the [Gemini-in-Chrome-Launcher/vpn-tunneling](https://github.com/VisualBoy/Gemini-in-Chrome-Launcher/tree/vpn-tunneling) branch for more datails.
+
+
