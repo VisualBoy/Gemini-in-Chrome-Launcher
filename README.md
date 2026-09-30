@@ -1,60 +1,86 @@
-# Gemini-in-Chrome-Launcher
+# Chrome Gemini Split-Tunneling Launcher
 
-Launches Google Chrome configured with US country overrides and specific AI flags to enable AI features outside US, using a standard Windows Desktop Shortcut or `.bat` file without calling PowerShell script.
+Launches Google Chrome configured with US country overrides to enable AI feature with automate OpenVPN  setup, connection to a US VPN Gate node with split-tunneling (route-nopull),     dynamically resolves target Gemini domains, adds static OS routes through the VPN interface,     and launches Chrome with Glic/Gemini flags.
 
-<img width="1365" height="768" alt="image" src="https://github.com/user-attachments/assets/721c1cf1-fabb-4947-8de0-59d05b445e83" />
-
-
+<img width="1024" height="576" alt="image" src="https://gist.github.com/user-attachments/assets/9022ffa4-149f-4b15-8990-8c1f666a18ad" />
 
 
+## Features
 
-## Chrome Experimental Flags Launcher
+- **Automated OpenVPN Connect V3 Setup**: Automatically detects local installations of OpenVPN Connect V3 and performs a silent MSI installation if missing.
+- **Dynamic US Node Selection**: Queries the VPN Gate API, parses node data, sorts by bandwidth speed, and selects optimal US-based VPN nodes.
+- **Strict Split-Tunneling**: Appends `route-nopull` to configuration profiles to ensure non-AI internet traffic is not routed through the VPN tunnel.
+- **Dynamic DNS & Host Routing**: Resolves target Gemini and Google AI API domain IPs at runtime and injects static IPv4 OS routes directly into the active OpenVPN adapter interface.
+- **Chrome Experimental Flags Launcher**: Launches Google Chrome configured with US country overrides, language forcing (`en-US`), and enabled feature flags for Glic, Prompt API, Summarizer API, Writer API, and related AI tools.
+- **Self-Elevating Execution**: Detects privilege levels and automatically prompts for UAC Administrator elevation when executed as a script.
 
-Launches Google Chrome configured with US country overrides, language forcing (`en-US`), and enabled feature flags for Glic, Prompt API, Summarizer API, Writer API, and related AI tools.
+## Tech Stack
 
-### Option 1: Desktop Shortcut / Program Link
+- **Scripting & Automation**: PowerShell 5.1+
+- **VPN Engine**: OpenVPN Connect V3 (CLI & MSI Installer)
+- **API Integration**: VPN Gate REST API (`http://www.vpngate.net/api/iphone/`)
+- **Target Platform**: Windows 10 / 11
+- **Target Browser**: Google Chrome
 
-Create a standard Windows shortcut pointing to `chrome.exe` with arguments passed via the Target field.
+## Getting Started
 
-1. Right-click your desktop $\rightarrow$ **New** $\rightarrow$ **Shortcut**.
-2. Set the **Target** field to:
+### Prerequisites
 
-```cmd
-"C:\Program Files\Google\Chrome\Application\chrome.exe" --variations-override-country=us --lang=en-US --enable-features=Glic,GlicSidePanel,GlicActor,GlicUnifiedFreScreen,GlicEntrypointVariations,GlicActorAutofill,GlicActorCursor,GlicActorScriptTools,GlicCaptureRegion,GlicDefaultToLastActiveConversation,GlicExperimentalTriggering,GlicPdfSummarize,GlicSelectionPrompt,GlicTabGroups,GlicZeroStateSuggestions,SyncAiThreads,SyncGeminiThreads,ContextualTasksSidePanel,PromptAPI,PromptAPIMultimodalInput,SummarizerAPI,WriterAPI,RewriterAPI,ProofreaderAPI --disable-session-crashed-bubble
+- Windows 10 or Windows 11
+- PowerShell 5.1 or higher
+- Google Chrome installed on default system paths
 
-```
+### Setup & Execution
 
----
-
-### Option 2: `.bat` Script
-
-If you want a [batch file](https://github.com/VisualBoy/Gemini-in-Chrome-Launcher/tree/main/launch_chrome_ai.bat) that also kills active Chrome instances first:
-
-`launch_chrome_ai.bat`
-
-```bat
-@echo off
-taskkill /F /IM chrome.exe /T 2>nul
-timeout /t 2 /nobreak >nul
-
-start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" ^
-  --variations-override-country=us ^
-  --lang=en-US ^
-  --enable-features=Glic,GlicSidePanel,GlicActor,GlicUnifiedFreScreen,GlicEntrypointVariations,GlicActorAutofill,GlicActorCursor,GlicActorScriptTools,GlicCaptureRegion,GlicDefaultToLastActiveConversation,GlicExperimentalTriggering,GlicPdfSummarize,GlicSelectionPrompt,GlicTabGroups,GlicZeroStateSuggestions,SyncAiThreads,SyncGeminiThreads,ContextualTasksSidePanel,PromptAPI,PromptAPIMultimodalInput,SummarizerAPI,WriterAPI,RewriterAPI,ProofreaderAPI ^
-  --disable-session-crashed-bubble
+1. **Set Execution Policy (Current Process)**
+Open PowerShell as Administrator and allow script execution for the current session:
+```powershell
+Set-ExecutionPolicy Unrestricted -Scope Process -Force
 
 ```
 
----
 
-### Option 3: `.bat` Wrapper for the Full PowerShell Script with VPN orchestration
-
-If you want a double-clickable `.bat` file that executes the full [PowerShell script](https://github.com/VisualBoy/Gemini-in-Chrome-Launcher/tree/main/launch_chrome_ai.ps1) (including elevated routing and VPN logic) while handling UAC elevation automatically:
-
-`launch_chrome_ai_with_vpn.bat`
-
-```bat
-@echo off
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File \"%~dp0launch_chrome_ai.ps1\"' -Verb RunAs"
+2. **Run the Launcher Script**
+Execute the PowerShell script directly:
+```powershell
+.\launch_chrome_ai.ps1
 
 ```
+
+
+> **Note**: If not started in an elevated console, the script will request UAC elevation automatically.
+
+
+
+## Architecture / How It Works
+
+```
++------------------+     +------------------------+     +------------------------+
+|  Privilege Check | --> | OpenVPN Connect Check  | --> |   Query VPN Gate API   |
+| (Elevate via UAC)|     | (Silent MSI Install)   |     | (Filter US Top Nodes)  |
++------------------+     +------------------------+     +------------------------+
+                                                                     |
+                                                                     v
++------------------+     +------------------------+     +------------------------+
+|  Launch Chrome   | <-- | Dynamic DNS Resolution | <-- | Import .ovpn Profile & |
+| (AI Feature Flags)|    | & Static OS Route Add  |     | Establish TUN Tunnel   |
++------------------+     +------------------------+     +------------------------+
+
+```
+
+1. **Privilege Elevation**: Confirms administrative privileges necessary for Windows routing table updates (`route add`).
+2. **Client Management**: Verifies `OpenVPNConnect.exe` existence. Downloads and executes silent installation via `msiexec` if absent.
+3. **Node Selection & Sanitization**: Retrieves CSV server lists from VPN Gate, cleans metadata headers, filters for active US nodes with Base64 OpenVPN configurations, and sorts by speed.
+4. **Tunnel Initialization**: Injects `route-nopull` into the config, imports the profile via OpenVPN CLI (`--import-profile`), initiates connection (`--connect`), and monitors Windows Network Adapters until the TUN/TAP interface status reports `Up`.
+5. **Selective Domain Routing**: Resolves IPv4 addresses for target domains (`gemini.google.com`, `generativelanguage.googleapis.com`, `cloudaicompanion.googleapis.com`, `alkalimodelfrontend-pa.googleapis.com`, `clients4.google.com`) and binds static host routes to the VPN interface index.
+6. **Browser Deployment**: Terminates active Chrome processes and launches Chrome using flags that enable built-in AI capabilities and mimic US region access.
+
+## Target Domains
+
+The script routes only the following domain endpoints through the US VPN interface:
+
+* `gemini.google.com`
+* `generativelanguage.googleapis.com`
+* `cloudaicompanion.googleapis.com`
+* `alkalimodelfrontend-pa.googleapis.com`
+* `clients4.google.com`
