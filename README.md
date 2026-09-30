@@ -2,7 +2,8 @@
 
 Launches Google Chrome configured with US country overrides and specific AI flags to enable AI features outside US, using a standard Windows Desktop Shortcut or `.bat` file without calling PowerShell script.
 
-<img width="1024" height="576" alt="image" src="https://github.com/user-attachments/assets/cf29857d-17b4-4f96-9777-c0149643c3d1" />
+<img width="1365" height="768" alt="image" src="https://github.com/user-attachments/assets/721c1cf1-fabb-4947-8de0-59d05b445e83" />
+
 
 
 
